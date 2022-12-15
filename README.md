@@ -1,5 +1,5 @@
 > # Application de sauvegarde 
-- Permet de sauvegarder uniquement uniquement les dossiers et fichiers qui ont été modififé 
+- Permet de sauvegarder uniquement les dossiers et fichiers qui ont été modifiés.
 
 &nbsp;
 
