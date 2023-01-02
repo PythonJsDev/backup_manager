@@ -1,44 +1,66 @@
 import os
+import pathlib
 import shutil
 from backup.in_out import error_msg
 
 
 def get_last_folder(path: str) -> str:
-    """ retourne le dernier dossier d'un chemin"""
-    return os.path.basename(os.path.normpath(path))
+    """Retourne le dernier dossier d'un chemin."""
+    return pathlib.PurePath(path).name
+    # return os.path.basename(os.path.normpath(path))
 
 
 def get_dir_list(path: str, root_folder: str) -> list[str]:
-    """ retourne la liste des chemins des dossiers et des sous-dossiers
-    à partir du répertoire racine """
+    """Retourne la liste des chemins des dossiers et des sous-dossiers à partir
+    du répertoire racine."""
     dirs_list = []
     try:
-        with os.scandir(path) as dir:
-            for element in dir:
-                if element.is_dir():
-                    dirs_list.append(element.path.split(root_folder)[1][1:])
-                    folders = get_dir_list(element.path, root_folder)
-                    if folders:
-                        dirs_list.extend(folders)
+        for element in pathlib.Path(path).iterdir():
+            if element.is_dir():
+                dirs_list.append(str(element).split(root_folder)[1][1:])
+                folders = get_dir_list(element, root_folder)
+                if folders:
+                    dirs_list.extend(folders)
         return dirs_list
     except FileNotFoundError:
-        error_msg(f"Le message '{path}' n'est pas valide.")
+        error_msg(f"Le chemin '{path}' n'est pas valide.")
+
+
+# def get_dir_list(path: str, root_folder: str) -> list[str]:
+#     """Retourne la liste des chemins des dossiers et des sous-dossiers à partir
+#     du répertoire racine."""
+#     dirs_list = []
+#     try:
+#         with os.scandir(path) as dir:
+#             for element in dir:
+#                 if element.is_dir():
+#                     dirs_list.append(element.path.split(root_folder)[1][1:])
+#                     folders = get_dir_list(element.path, root_folder)
+#                     if folders:
+#                         dirs_list.extend(folders)
+#         return dirs_list
+#     except FileNotFoundError:
+#         error_msg(f"Le message '{path}' n'est pas valide.")
 
 
 def diff_between_two_lists(list_1: list, list_2: list) -> list:
-    """retourne les éléments présents dans list_1 mais pas dans list_2"""
+    """Retourne les éléments présents dans list_1 mais pas dans list_2."""
     return [el for el in list_1 if el not in list_2]
 
 
 def create_folders(folders: list, path: str):
-    """ création de la liste de dossiers passée en paramètre"""
+    """Création de la liste de dossiers passée en paramètre."""
     for folder in folders:
-        os.makedirs(os.path.join(path, folder), exist_ok=True)
+        dir = pathlib.PurePosixPath(path).joinpath(folder)
+        pathlib.Path(dir).mkdir(exist_ok=True)
+        # os.makedirs(os.path.join(path, folder), exist_ok=True)
 
 
 def remove_subfolders_paths(path_folders: list):
-    """ Supprime les chemins vers les sous-dossiers.
-    Retourne la liste des chemins vers les dossiers racines"""
+    """Supprime les chemins vers les sous-dossiers.
+
+    Retourne la liste des chemins vers les dossiers racines
+    """
     path_root_folders = [path_folders[0]]
     root_path = path_folders[0]
     for elem in path_folders:
@@ -49,8 +71,8 @@ def remove_subfolders_paths(path_folders: list):
 
 
 def delete_folders(folders: list, path: str):
-    """supprime une liste de dossiers, des sous-dossiers et
-    des fichiers qu'ils contiennent"""
+    """Supprime une liste de dossiers, des sous-dossiers et des fichiers qu'ils
+    contiennent."""
     for folder in remove_subfolders_paths(folders):
         try:
             shutil.rmtree(os.path.join(path, folder))
@@ -59,42 +81,44 @@ def delete_folders(folders: list, path: str):
 
 
 def files_names_list(path_dir: str) -> list[str]:
-    """ retourne la liste des fichiers contenus dans le dossier passé en paramètre """
+    """Retourne la liste des fichiers contenus dans le dossier passé en
+    paramètre."""
     return list(get_files_names_and_sizes(path_dir).get(path_dir).keys())
 
 
 def files_sizes_list(path_dir: str) -> dict[str:str]:
-    """ retourne un dict nom du fichier: taille des fichiers contenus dans le dossier passé en paramètre """
+    """Retourne un dict nom du fichier: taille des fichiers contenus dans le
+    dossier passé en paramètre."""
     return get_files_names_and_sizes(path_dir).get(path_dir)
 
 
 def directories_manager_create_delete(src_dirs_list, target_dirs_list, path_target):
-    """
-    Création des dossiers manquants sur la cible et suppression des dossiers
-    présents sur la cible mais pas sur la source
-    """
+    """Création des dossiers manquants sur la cible et suppression des dossiers
+    présents sur la cible mais pas sur la source."""
     missing_folders = diff_between_two_lists(src_dirs_list, target_dirs_list)
     excess_folders = diff_between_two_lists(target_dirs_list, src_dirs_list)
-    if missing_folders:
-        create_folders(missing_folders, path_target)
-    if excess_folders:
-        delete_folders(excess_folders, path_target)
+    print('missing', missing_folders)
+    print('excess', excess_folders)
+    # if missing_folders:
+    #     create_folders(missing_folders, path_target)
+    # if excess_folders:
+    #     delete_folders(excess_folders, path_target)
 
 
 def build_paths(root_path: str, folders: list) -> list:
-    """ retourne la list des chemins complets
-    de toutes l'arborescence"""
+    """Retourne la list des chemins complets de toute l'arborescence."""
     paths = [os.path.join(root_path, dir) for dir in folders]
     paths[0] = root_path
     return paths
 
 
 def files_manager_copy_delete(path_source, path_target, src_dirs):
-    """
-    Copie les fichiers présents sur la source dans les dossiers
-    'src_dirs' mais manquants dans les dossiers 'cible'.
-    Supprime les fichiers présents sur la cible dans les dossiers 'dir_targets'
-    mais qui n'existent pas sur la source dans les dossiers 'dirs_source'
+    """Copie les fichiers présents sur la source dans les dossiers 'src_dirs'
+    mais manquants dans les dossiers 'cible'.
+
+    Supprime les fichiers présents sur la cible dans les dossiers
+    'dir_targets' mais qui n'existent pas sur la source dans les
+    dossiers 'dirs_source'
     """
     paths_src = build_paths(path_source, src_dirs)
     paths_target = build_paths(path_target, src_dirs)
@@ -121,10 +145,8 @@ def files_manager_copy_delete(path_source, path_target, src_dirs):
 
 
 def files_manager_update(path_source, path_target, src_dirs):
-    """
-    mise à jour des fichiers cible n'ayant pas la même taille
-    en octet que les fichiers source
-    """
+    """Mise à jour des fichiers cible n'ayant pas la même taille en octet que
+    les fichiers source."""
     paths_src = build_paths(path_source, src_dirs)
     paths_target = build_paths(path_target, src_dirs)
     for i, path_src in enumerate(paths_src):
