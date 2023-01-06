@@ -26,26 +26,10 @@ def get_dir_list(path: str, root_folder: str) -> list[str]:
         error_msg(f"Le chemin '{path}' n'est pas valide.")
 
 
-# def get_dir_list(path: str, root_folder: str) -> list[str]:
-#     """Retourne la liste des chemins des dossiers et des sous-dossiers à partir
-#     du répertoire racine."""
-#     dirs_list = []
-#     try:
-#         with os.scandir(path) as dir:
-#             for element in dir:
-#                 if element.is_dir():
-#                     dirs_list.append(element.path.split(root_folder)[1][1:])
-#                     folders = get_dir_list(element.path, root_folder)
-#                     if folders:
-#                         dirs_list.extend(folders)
-#         return dirs_list
-#     except FileNotFoundError:
-#         error_msg(f"Le message '{path}' n'est pas valide.")
-
-
 def diff_between_two_lists(list_1: list, list_2: list) -> list:
     """Retourne les éléments présents dans list_1 mais pas dans list_2."""
-    return [el for el in list_1 if el not in list_2]
+    if isinstance(list_1, list) and isinstance(list_2, list):
+        return [el for el in list_1 if el not in list_2]
 
 
 def create_folders(folders: list, path: str):
@@ -53,7 +37,6 @@ def create_folders(folders: list, path: str):
     for folder in folders:
         dir = pathlib.PurePosixPath(path).joinpath(folder)
         pathlib.Path(dir).mkdir(exist_ok=True)
-        # os.makedirs(os.path.join(path, folder), exist_ok=True)
 
 
 def remove_subfolders_paths(path_folders: list):
@@ -97,12 +80,11 @@ def directories_manager_create_delete(src_dirs_list, target_dirs_list, path_targ
     présents sur la cible mais pas sur la source."""
     missing_folders = diff_between_two_lists(src_dirs_list, target_dirs_list)
     excess_folders = diff_between_two_lists(target_dirs_list, src_dirs_list)
-    print('missing', missing_folders)
-    print('excess', excess_folders)
-    # if missing_folders:
-    #     create_folders(missing_folders, path_target)
-    # if excess_folders:
-    #     delete_folders(excess_folders, path_target)
+
+    if missing_folders:
+        create_folders(missing_folders, path_target)
+    if excess_folders:
+        delete_folders(excess_folders, path_target)
 
 
 def build_paths(root_path: str, folders: list) -> list:

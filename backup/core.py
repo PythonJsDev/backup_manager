@@ -16,10 +16,7 @@ def run_app():
     src_dirs = utils.get_dir_list(path_source, root_folder_src)
     target_dirs = utils.get_dir_list(path_target, root_folder_src)
 
-    print(src_dirs)
-    print()
-    print(target_dirs)
     if src_dirs and target_dirs:
         utils.directories_manager_create_delete(src_dirs, target_dirs, path_target)
-    # utils.files_manager_copy_delete(path_source, path_target, src_dirs)
-    # utils.files_manager_update(path_source, path_target, src_dirs)
+        utils.files_manager_copy_delete(path_source, path_target, src_dirs)
+        utils.files_manager_update(path_source, path_target, src_dirs)
