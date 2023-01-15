@@ -65,18 +65,19 @@ def delete_folders(folders: list[str], path: str):
             error_msg(str(error))
 
 
-def files_names_list(path_dir: str) -> list[str]:
+def files_names_list(path_dir: str) -> list[str] | None:
     """Retourne la liste des fichiers contenus dans le dossier passé en
     paramètre."""
-    return list(get_files_names_and_sizes(path_dir)[path_dir].keys())
-    # return list(get_files_names_and_sizes(path_dir).get(path_dir).keys())
+    names_and_sizes = get_files_names_and_sizes(path_dir).get(path_dir)
+    if names_and_sizes:
+        return list(names_and_sizes.keys())
+    return None
 
 
-def files_sizes_list(path_dir: str) -> dict[str, int]:
+def files_sizes_list(path_dir: str) -> dict[str, int] | None:
     """Retourne un dict {nom du fichier: taille des fichiers} contenus dans le
     dossier passé en paramètre."""
-    return get_files_names_and_sizes(path_dir)[path_dir]
-    # return get_files_names_and_sizes(path_dir).get(path_dir)
+    return get_files_names_and_sizes(path_dir).get(path_dir)
 
 
 def directories_manager_create_delete(
@@ -99,7 +100,9 @@ def build_paths(root_path: str, folders: list[str]) -> list[str]:
     return paths
 
 
-def files_manager_copy_delete(path_source, path_target, src_dirs):
+def files_manager_copy_delete(
+    path_source: str, path_target: str, src_dirs: list[str]
+) -> None:
     """Copie les fichiers présents sur la source dans les dossiers 'src_dirs'
     mais manquants dans les dossiers 'cible'.
 
@@ -114,32 +117,33 @@ def files_manager_copy_delete(path_source, path_target, src_dirs):
     for i, path_src in enumerate(paths_src):
         src_files_name = files_names_list(path_src)
         target_files_name = files_names_list(paths_target[i])
-        files_to_copy = diff_between_two_lists(
-            src_files_name, target_files_name
-        )
-        files_to_delete = diff_between_two_lists(
-            target_files_name, src_files_name
-        )
-        if files_to_copy:
-            for file in files_to_copy:
-                try:
-                    shutil.copy2(
-                        os.path.join(path_src, file),
-                        os.path.join(paths_target[i], file),
-                    )
-                except Exception as err:
-                    error_msg(f"Une erreur s'est produite : {err}")
-        if files_to_delete:
-            for file in files_to_delete:
-                file_path = os.path.join(paths_target[i], file)
-                os.remove(file_path) if os.path.exists(
-                    file_path
-                ) else error_msg(f"Le fichier '{file_path}' n'existe pas.")
+        if src_files_name and target_files_name:
+            files_to_copy = diff_between_two_lists(
+                src_files_name, target_files_name
+            )
+            files_to_delete = diff_between_two_lists(
+                target_files_name, src_files_name
+            )
+            if files_to_copy:
+                for file in files_to_copy:
+                    try:
+                        shutil.copy2(
+                            os.path.join(path_src, file),
+                            os.path.join(paths_target[i], file),
+                        )
+                    except Exception as err:
+                        error_msg(f"Une erreur s'est produite : {err}")
+            if files_to_delete:
+                for file in files_to_delete:
+                    file_path = os.path.join(paths_target[i], file)
+                    os.remove(file_path) if os.path.exists(
+                        file_path
+                    ) else error_msg(f"Le fichier '{file_path}' n'existe pas.")
 
 
 def files_manager_update(
     path_source: str, path_target: str, src_dirs: list[str]
-):
+) -> None:
     """Mise à jour des fichiers cible n'ayant pas la même taille en octet que
     les fichiers source."""
     paths_src = build_paths(path_source, src_dirs)
@@ -147,20 +151,21 @@ def files_manager_update(
     for i, path_src in enumerate(paths_src):
         dicts_src = files_sizes_list(path_src)
         dicts_target = files_sizes_list(paths_target[i])
-        files_to_update = [
-            file
-            for file in dicts_src
-            if dicts_src.get(file) != dicts_target.get(file)
-        ]
-        if files_to_update:
-            for file in files_to_update:
-                try:
-                    shutil.copy2(
-                        os.path.join(path_src, file),
-                        os.path.join(paths_target[i], file),
-                    )
-                except Exception as err:
-                    error_msg(f"Une erreur s'est produite : {err}")
+        if dicts_src and dicts_target:
+            files_to_update = [
+                file
+                for file in dicts_src
+                if dicts_src.get(file) != dicts_target.get(file)
+            ]
+            if files_to_update:
+                for file in files_to_update:
+                    try:
+                        shutil.copy2(
+                            os.path.join(path_src, file),
+                            os.path.join(paths_target[i], file),
+                        )
+                    except Exception as err:
+                        error_msg(f"Une erreur s'est produite : {err}")
 
 
 def get_files_names_and_sizes(path: str) -> dict[str, dict[str, int]]:

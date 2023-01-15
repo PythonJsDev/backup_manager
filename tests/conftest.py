@@ -54,7 +54,7 @@ def test_files_name_and_size(tmp_path_factory):
     return root
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def folders_tree(tmp_path_factory):
     
     # path_folders = [r"root\dirname_A",

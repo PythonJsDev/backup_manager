@@ -144,6 +144,52 @@ def test_files_names_list(test_files_name_and_size, monkeypatch):
     assert expected_list == utils.files_names_list(test_files_name_and_size)
 
 
+def test_files_names_list_key_error(test_files_name_and_size, monkeypatch):
+    """teste que la fonction 'files_names_list' retourne None si la clé du
+    dictionnaire généré par get_files_names_and_sizes n'est pas trouvé"""
+
+    def mock_get_files_names_and_sizes(path):
+        return {'error key': {"hello.txt": 14, "lorem.txt": 465}}
+
+    monkeypatch.setattr(
+        "backup.utils.get_files_names_and_sizes",
+        mock_get_files_names_and_sizes,
+    )
+    expected_list = None
+    assert expected_list == utils.files_names_list(test_files_name_and_size)
+
+
+def test_files_sizes_list(test_files_name_and_size, monkeypatch):
+    """teste que la fonction 'files_sizes_list' retourne un dict
+    'nom du fichier' : taille du fichier qui sont dans le dossier passé
+    en argument"""
+
+    def mock_get_files_names_and_sizes(path):
+        return {test_files_name_and_size: {"hello.txt": 14, "lorem.txt": 465}}
+
+    monkeypatch.setattr(
+        "backup.utils.get_files_names_and_sizes",
+        mock_get_files_names_and_sizes,
+    )
+    expected_list = {"hello.txt": 14, "lorem.txt": 465}
+    assert expected_list == utils.files_sizes_list(test_files_name_and_size)
+
+
+def test_files_sizes_list_key_error(test_files_name_and_size, monkeypatch):
+    """teste que la fonction 'files_sizes_list' retourne None si la clé du
+    dictionnaire généré par get_files_names_and_sizes n'est pas trouvé"""
+
+    def mock_get_files_names_and_sizes(path):
+        return {'error key': {"hello.txt": 14, "lorem.txt": 465}}
+
+    monkeypatch.setattr(
+        "backup.utils.get_files_names_and_sizes",
+        mock_get_files_names_and_sizes,
+    )
+    expected_list = None
+    assert expected_list == utils.files_sizes_list(test_files_name_and_size)
+
+
 def test_remove_subfolders_paths():
     """Verifie que 'remove_subfolders_paths' supprime du chemin les sous-
     dossiers lorsqu'ils existent."""
@@ -157,6 +203,27 @@ def test_remove_subfolders_paths():
     assert expected_path == utils.remove_subfolders_paths(path_folders)
 
 
+def test_delete_folders_path_not_found(folders_tree, monkeypatch, capsys):
+    """ vérifie que lorsque le chemin du dossier à effacer n'est pas trouvé
+    alors le message affiché dans la console est correcte"""
+    path_target = r'Z:\backup'
+
+    def mock_remove_subfolders_paths(path_folders: list) -> list:
+        return [
+            r"root_target\dirname_A",
+        ]
+
+    monkeypatch.setattr(
+        "backup.utils.remove_subfolders_paths",
+        mock_remove_subfolders_paths,
+    )
+    utils.delete_folders(folders_tree, path_target)
+    captured = capsys.readouterr()
+    expected = ("[WinError 3] Le chemin d’accès spécifié est introuvable:"
+                " 'Z:\\\\backup\\\\root_target\\\\dirname_A'\n")
+    assert captured.out == expected
+
+
 def test_delete_folders(folders_tree, monkeypatch):
     """Verifie que les dossiers dirname_A et sub_dirname_B et ce qu'ils
     contiennent sont supprimés de la cible path_target """
@@ -165,7 +232,7 @@ def test_delete_folders(folders_tree, monkeypatch):
     def mock_remove_subfolders_paths(path_folders: list) -> list:
         return [
             r"root_target\dirname_A",
-            r"root_target\dirname_B\sub_dirname_B",
+            r"root_target\dirname_B\sub_dirname_B"
         ]
 
     monkeypatch.setattr(
