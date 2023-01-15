@@ -1,8 +1,9 @@
 from . import utils
 from . import in_out
+from typing import Tuple, Optional
 
 
-def get_input_path():
+def get_input_path() -> Tuple[Optional[str], Optional[str]]:
     """lecture des chemins pointant vers les dossiers racines
     entrés par l'utilisateur"""
     return in_out.input_path("path_source"), in_out.input_path("path_target")
@@ -17,8 +18,8 @@ def run_app():
     target_dirs = utils.get_dir_list(path_target, root_folder_src)
 
     if src_dirs and target_dirs:
-        utils.directories_manager_create_delete(src_dirs,
-                                                target_dirs,
-                                                path_target)
+        utils.directories_manager_create_delete(
+            src_dirs, target_dirs, path_target
+        )
         utils.files_manager_copy_delete(path_source, path_target, src_dirs)
         utils.files_manager_update(path_source, path_target, src_dirs)
