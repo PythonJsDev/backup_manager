@@ -1,7 +1,13 @@
 import os
 import pathlib
 import shutil
-from backup.in_out import error_msg
+from backup.in_out import (
+    error_msg,
+    get_dir_path,
+    display_list_of_items,
+    info_msg,
+    continue_or_stop,
+)
 
 
 def get_last_folder(path: str) -> str:
@@ -22,9 +28,33 @@ def get_dir_list(path: str, root_folder: str) -> list[str] | None:
                 if folders:
                     dirs_list.extend(folders)
         return dirs_list
-    except FileNotFoundError:
-        error_msg(f"Le chemin '{path}' n'est pas valide.")
+    # except FileNotFoundError:
+    except OSError as err:
+        error_msg(str(err))
+        # error_msg(f"Le chemin '{path}' n'est pas valide.")
         return None
+
+
+def get_src_dirs_and_target_dirs() -> tuple[
+    tuple[str, list[str]], tuple[str, list[str]]
+]:
+    """Demande à l'utilisateur le chemin des dossiers source et cible
+    et retourne la liste des sous dossiers qu'ils contiennent,
+    ainsi que les chemins source et cible entrés par l'utilisateur."""
+    src_dirs: list[str] | None = []
+    target_dirs: list[str] | None = []
+
+    while True:
+        if not src_dirs:
+            path_source = get_dir_path('chemin source')
+        if not target_dirs:
+            path_target = get_dir_path('chemin cible')
+        root_folder_src = get_last_folder(path_source)
+        src_dirs = get_dir_list(path_source, root_folder_src)
+        target_dirs = get_dir_list(path_target, root_folder_src)
+        if src_dirs and target_dirs:
+            break
+    return (path_source, src_dirs), (path_target, target_dirs)
 
 
 def diff_between_two_lists(list_1: list, list_2: list) -> list:
@@ -82,7 +112,7 @@ def files_sizes_list(path_dir: str) -> dict[str, int] | None:
 
 def directories_manager_create_delete(
     src_dirs_list: list, target_dirs_list: list, path_target: str
-) -> None:
+) -> bool | None:
     """Création des dossiers manquants sur la cible et suppression des dossiers
     présents sur la cible mais pas sur la source."""
     missing_folders = diff_between_two_lists(src_dirs_list, target_dirs_list)
@@ -90,7 +120,19 @@ def directories_manager_create_delete(
     if missing_folders:
         create_folders(missing_folders, path_target)
     if excess_folders:
-        delete_folders(excess_folders, path_target)
+        info_msg(
+            (
+                "Les dossiers suivants vont être supprimés du dossier cible:"
+                f"{path_target}"
+            )
+        )
+        display_list_of_items(excess_folders)
+        if continue_or_stop():
+            delete_folders(excess_folders, path_target)
+        else:
+            info_msg('Fin du programme')
+            return True
+    return None
 
 
 def build_paths(root_path: str, folders: list[str]) -> list[str]:
@@ -110,7 +152,6 @@ def files_manager_copy_delete(
     'dir_targets' mais qui n'existent pas sur la source dans les
     dossiers 'dirs_source'
     """
-
     paths_src = build_paths(path_source, src_dirs)
     paths_target = build_paths(path_target, src_dirs)
 
