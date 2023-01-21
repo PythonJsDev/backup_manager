@@ -276,34 +276,38 @@ def test_delete_folders_path_not_found(folders_tree, monkeypatch, capsys):
 #     )
 #     utils.delete_folders(folders_tree, path_target)
 
-# def test_get_src_dirs_and_target_dirs_displays(monkeypatch):
-#     """Verifie que la fonction 'get_src_dirs_and_target_dirs' retourne la
-#     liste des sous dossiers contenus dans les dossiers source et cible"""
-#     mock_get_dir_path = Mock()
-#     mock_get_dir_path.side_effect = ["dirname_A", "dirname_B"]
-#     monkeypatch.setattr("backup.in_out.get_dir_path", mock_get_dir_path)
 
-#     print(utils.get_paths())
-
-
-def test_get_paths_with_mock(monkeypatch):
+def test_get_src_dirs_and_target_dirs(monkeypatch):
+    """Verifie que la fonction 'get_src_dirs_and_target_dirs' retourne la
+    liste des sous dossiers contenus dans les dossiers source et cible"""
     mock_get_dir_path = Mock()
-    mock_get_dir_path.side_effect = ["path_A", "path_B"]
-    print(monkeypatch.setattr("backup.in_out.get_dir_path", mock_get_dir_path))
-    print(utils.get_paths())
+    mock_get_dir_path.side_effect = [
+        r"source_path\dirname_A",
+        r"target_path\dirname_B",
+    ]
+    mock_get_dir_list = Mock()
+    mock_get_dir_list.side_effect = [
+        ["source_dir_A", "source_dir_B"],
+        ["target_dir_A", "target_dir_B"],
+    ]
+
+    def mock_get_last_folder(path_source):
+        return "source_dir_A"
+
+    monkeypatch.setattr("backup.utils.get_dir_path", mock_get_dir_path)
+    monkeypatch.setattr("backup.utils.get_dir_list", mock_get_dir_list)
+    monkeypatch.setattr("backup.utils.get_last_folder", mock_get_last_folder)
+    expected = (
+        ('source_path\\dirname_A', ['source_dir_A', 'source_dir_B']),
+        ('target_path\\dirname_B', ['target_dir_A', 'target_dir_B']),
+    )
+    assert utils.get_src_dirs_and_target_dirs() == expected
 
 
-
-# def test_get_paths_without_mock(monkeypatch):
-#     returns = ["path_A", "path_B"]
-
-#     def mock_get_dir_path(ask_path: str):
-#         return returns.pop()
-#     monkeypatch.setattr("backup.in_out.get_dir_path", mock_get_dir_path)
-#     print(utils.get_paths())
+def test_files_manager_copy_delete():
+    ...
 
 
 # files_manager_update
 # files_manager_copy_delete
 # directories_manager_create_delete
-# get_src_dirs_and_target_dirs

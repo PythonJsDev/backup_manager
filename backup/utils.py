@@ -7,7 +7,6 @@ from backup.in_out import (
     display_list_of_items,
     info_msg,
     continue_or_stop,
-
 )
 
 
@@ -29,18 +28,9 @@ def get_dir_list(path: str, root_folder: str) -> list[str] | None:
                 if folders:
                     dirs_list.extend(folders)
         return dirs_list
-    # except FileNotFoundError:
     except OSError as err:
         error_msg(str(err))
-        # error_msg(f"Le chemin '{path}' n'est pas valide.")
         return None
-
-
-def get_paths():
-    path_source = get_dir_path('chemin source')
-    # path_target = get_dir_path('chemin cible')
-    return path_source
-    # return path_source, path_target
 
 
 def get_src_dirs_and_target_dirs() -> tuple[
@@ -58,8 +48,6 @@ def get_src_dirs_and_target_dirs() -> tuple[
         if not target_dirs:
             path_target = get_dir_path('chemin cible')
         root_folder_src = get_last_folder(path_source)
-        src_dirs = get_dir_list(path_source, root_folder_src)
-        target_dirs = get_dir_list(path_target, root_folder_src)
         src_dirs = get_dir_list(path_source, root_folder_src)
         target_dirs = get_dir_list(path_target, root_folder_src)
         if src_dirs and target_dirs:
@@ -145,10 +133,6 @@ def directories_manager_create_delete(
         display_list_of_items(excess_folders)
         if continue_or_stop():
             delete_folders(excess_folders, path_target)
-        # else:
-        #     info_msg('Fin du programme')
-        #     return True
-    # return None
 
 
 def build_paths(root_path: str, folders: list[str]) -> list[str]:
@@ -184,20 +168,28 @@ def files_manager_copy_delete(
                 target_files_name, src_files_name
             )
             if files_to_copy:
-                for file in files_to_copy:
-                    try:
-                        shutil.copy2(
-                            os.path.join(path_src, file),
-                            os.path.join(paths_target[i], file),
-                        )
-                    except Exception as err:
-                        error_msg(f"Une erreur s'est produite : {err}")
+                copy_files(files_to_copy, path_src, paths_target[i])
             if files_to_delete:
-                for file in files_to_delete:
-                    file_path = os.path.join(paths_target[i], file)
-                    os.remove(file_path) if os.path.exists(
-                        file_path
-                    ) else error_msg(f"Le fichier '{file_path}' n'existe pas.")
+                delete_files(files_to_delete, paths_target[i])
+
+
+def copy_files(files_to_copy: list[str], path_src: str, paths_target: str):
+    for file in files_to_copy:
+        try:
+            shutil.copy2(
+                os.path.join(path_src, file),
+                os.path.join(paths_target, file),
+            )
+        except Exception as err:
+            error_msg(f"Une erreur s'est produite : {err}")
+
+
+def delete_files(files_to_delete: list[str], paths_target: str):
+    for file in files_to_delete:
+        file_path = os.path.join(paths_target, file)
+        os.remove(file_path) if os.path.exists(file_path) else error_msg(
+            f"Le fichier '{file_path}' n'existe pas."
+        )
 
 
 def files_manager_update(
@@ -217,15 +209,18 @@ def files_manager_update(
                 if dicts_src.get(file) != dicts_target.get(file)
             ]
             if files_to_update:
-                print('files_to_update', files_to_update)
-                # for file in files_to_update:
-                #     try:
-                #         shutil.copy2(
-                #             os.path.join(path_src, file),
-                #             os.path.join(paths_target[i], file),
-                #         )
-                #     except Exception as err:
-                #         error_msg(f"Une erreur s'est produite : {err}")
+                update_files(files_to_update, path_src, paths_target[i])
+
+
+def update_files(files_to_update: list[str], path_src: str, paths_target: str):
+    for file in files_to_update:
+        try:
+            shutil.copy2(
+                os.path.join(path_src, file),
+                os.path.join(paths_target, file),
+            )
+        except Exception as err:
+            error_msg(f"Une erreur s'est produite : {err}")
 
 
 def get_files_names_and_sizes(path: str) -> dict[str, dict[str, int]]:
