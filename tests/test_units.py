@@ -1,5 +1,6 @@
 # from backup import core
 from backup import utils
+from unittest.mock import Mock
 
 
 def test_get_last_folder_empty(test_path):
@@ -90,6 +91,30 @@ def test_diff_between_two_list_if_list2_not_list():
     list_2 = "not a list"
     assert not (utils.diff_between_two_lists(list_1, list_2))
     assert not (utils.diff_between_two_lists(list_2, list_1))
+
+
+def test_diff_between_two_list_if_list2_is_none():
+    """Test si la fonction 'diff_between_two_lists' retourne list_1
+    si list_2 est None."""
+    list_1 = ["a", "b", "c", "d", "e", "g"]
+    list_2 = None
+    assert utils.diff_between_two_lists(list_1, list_2) == list_1
+
+
+def test_diff_between_two_list_if_list1_is_none():
+    """Test si la fonction 'diff_between_two_lists' retourne list_2
+    si list_1 est None."""
+    list_1 = None
+    list_2 = ["a", "b", "c", "d", "e", "g"]
+    assert utils.diff_between_two_lists(list_1, list_2) == list_2
+
+
+def test_diff_between_two_list_if_lists_are_none():
+    """Test si la fonction 'diff_between_two_lists' retourne None
+    si list_1 et list_2 sont None."""
+    list_1 = None
+    list_2 = None
+    assert not utils.diff_between_two_lists(list_1, list_2)
 
 
 def test_create_folders(tmp_path):
@@ -250,3 +275,35 @@ def test_delete_folders_path_not_found(folders_tree, monkeypatch, capsys):
 #         mock_remove_subfolders_paths,
 #     )
 #     utils.delete_folders(folders_tree, path_target)
+
+# def test_get_src_dirs_and_target_dirs_displays(monkeypatch):
+#     """Verifie que la fonction 'get_src_dirs_and_target_dirs' retourne la
+#     liste des sous dossiers contenus dans les dossiers source et cible"""
+#     mock_get_dir_path = Mock()
+#     mock_get_dir_path.side_effect = ["dirname_A", "dirname_B"]
+#     monkeypatch.setattr("backup.in_out.get_dir_path", mock_get_dir_path)
+
+#     print(utils.get_paths())
+
+
+def test_get_paths_with_mock(monkeypatch):
+    mock_get_dir_path = Mock()
+    mock_get_dir_path.side_effect = ["path_A", "path_B"]
+    print(monkeypatch.setattr("backup.in_out.get_dir_path", mock_get_dir_path))
+    print(utils.get_paths())
+
+
+
+# def test_get_paths_without_mock(monkeypatch):
+#     returns = ["path_A", "path_B"]
+
+#     def mock_get_dir_path(ask_path: str):
+#         return returns.pop()
+#     monkeypatch.setattr("backup.in_out.get_dir_path", mock_get_dir_path)
+#     print(utils.get_paths())
+
+
+# files_manager_update
+# files_manager_copy_delete
+# directories_manager_create_delete
+# get_src_dirs_and_target_dirs

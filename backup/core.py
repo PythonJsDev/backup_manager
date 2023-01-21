@@ -10,9 +10,8 @@ def run_app():
     path_target, target_dirs = target_datas
 
     if src_dirs and target_dirs:
-        valeur_returned = utils.directories_manager_create_delete(
+        utils.directories_manager_create_delete(
             src_dirs, target_dirs, path_target
         )
-        if not valeur_returned:
-            utils.files_manager_copy_delete(path_source, path_target, src_dirs)
-            utils.files_manager_update(path_source, path_target, src_dirs)
+        utils.files_manager_copy_delete(path_source, path_target, src_dirs)
+        utils.files_manager_update(path_source, path_target, src_dirs)

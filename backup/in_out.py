@@ -48,6 +48,3 @@ def continue_or_stop():
             return True
         if choice == 'n':
             return False
-
-
-    

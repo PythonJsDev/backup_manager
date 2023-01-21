@@ -7,6 +7,7 @@ from backup.in_out import (
     display_list_of_items,
     info_msg,
     continue_or_stop,
+
 )
 
 
@@ -35,6 +36,13 @@ def get_dir_list(path: str, root_folder: str) -> list[str] | None:
         return None
 
 
+def get_paths():
+    path_source = get_dir_path('chemin source')
+    # path_target = get_dir_path('chemin cible')
+    return path_source
+    # return path_source, path_target
+
+
 def get_src_dirs_and_target_dirs() -> tuple[
     tuple[str, list[str]], tuple[str, list[str]]
 ]:
@@ -52,15 +60,24 @@ def get_src_dirs_and_target_dirs() -> tuple[
         root_folder_src = get_last_folder(path_source)
         src_dirs = get_dir_list(path_source, root_folder_src)
         target_dirs = get_dir_list(path_target, root_folder_src)
+        src_dirs = get_dir_list(path_source, root_folder_src)
+        target_dirs = get_dir_list(path_target, root_folder_src)
         if src_dirs and target_dirs:
             break
     return (path_source, src_dirs), (path_target, target_dirs)
 
 
-def diff_between_two_lists(list_1: list, list_2: list) -> list:
+def diff_between_two_lists(
+    list_1: list | None, list_2: list | None
+) -> list | None:
     """Retourne les éléments présents dans list_1 mais pas dans list_2."""
     if isinstance(list_1, list) and isinstance(list_2, list):
         return [el for el in list_1 if el not in list_2]
+    if list_1 and not list_2:
+        return list_1
+    if list_2 and not list_1:
+        return list_2
+    return None
 
 
 def create_folders(folders: list[str], path: str) -> None:
@@ -75,7 +92,6 @@ def remove_subfolders_paths(path_folders: list[str]) -> list[str]:
 
     Retourne la liste des chemins vers les dossiers racines
     """
-
     path_root_folders = [path_folders[0]]
     root_path = path_folders[0]
     for elem in path_folders:
@@ -112,7 +128,7 @@ def files_sizes_list(path_dir: str) -> dict[str, int] | None:
 
 def directories_manager_create_delete(
     src_dirs_list: list, target_dirs_list: list, path_target: str
-) -> bool | None:
+):
     """Création des dossiers manquants sur la cible et suppression des dossiers
     présents sur la cible mais pas sur la source."""
     missing_folders = diff_between_two_lists(src_dirs_list, target_dirs_list)
@@ -129,10 +145,10 @@ def directories_manager_create_delete(
         display_list_of_items(excess_folders)
         if continue_or_stop():
             delete_folders(excess_folders, path_target)
-        else:
-            info_msg('Fin du programme')
-            return True
-    return None
+        # else:
+        #     info_msg('Fin du programme')
+        #     return True
+    # return None
 
 
 def build_paths(root_path: str, folders: list[str]) -> list[str]:
@@ -152,13 +168,15 @@ def files_manager_copy_delete(
     'dir_targets' mais qui n'existent pas sur la source dans les
     dossiers 'dirs_source'
     """
+
     paths_src = build_paths(path_source, src_dirs)
     paths_target = build_paths(path_target, src_dirs)
 
     for i, path_src in enumerate(paths_src):
         src_files_name = files_names_list(path_src)
         target_files_name = files_names_list(paths_target[i])
-        if src_files_name and target_files_name:
+
+        if src_files_name and not target_files_name:
             files_to_copy = diff_between_two_lists(
                 src_files_name, target_files_name
             )
@@ -199,14 +217,15 @@ def files_manager_update(
                 if dicts_src.get(file) != dicts_target.get(file)
             ]
             if files_to_update:
-                for file in files_to_update:
-                    try:
-                        shutil.copy2(
-                            os.path.join(path_src, file),
-                            os.path.join(paths_target[i], file),
-                        )
-                    except Exception as err:
-                        error_msg(f"Une erreur s'est produite : {err}")
+                print('files_to_update', files_to_update)
+                # for file in files_to_update:
+                #     try:
+                #         shutil.copy2(
+                #             os.path.join(path_src, file),
+                #             os.path.join(paths_target[i], file),
+                #         )
+                #     except Exception as err:
+                #         error_msg(f"Une erreur s'est produite : {err}")
 
 
 def get_files_names_and_sizes(path: str) -> dict[str, dict[str, int]]:
