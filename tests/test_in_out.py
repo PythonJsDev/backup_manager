@@ -99,7 +99,7 @@ def test_continue_or_stop_loop_until_yes(capsys, monkeypatch):
     assert valeur_returned
 
 
-def test_continue_or_stop_loop_until_non(capsys, monkeypatch):
+def test_continue_or_stop_loop_until_no(capsys, monkeypatch):
     """Verifie que la fonction 'continue_or_stop' boucle tant
     que l'utilisateur ne rentre pas 'n'
     La fonction retourne alors False"""

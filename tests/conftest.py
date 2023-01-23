@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import Mock
 
 
 @pytest.fixture(scope="session")
@@ -54,27 +55,51 @@ def test_files_name_and_size(tmp_path_factory):
     return root
 
 
-@pytest.fixture(scope="session")
-def folders_tree(tmp_path_factory):
-    
-    # path_folders = [r"root\dirname_A",
-    #                 r"root\dirname_A\sub_dirname_A",
-    #                 r"root\dirname_A\sub_dirname_A\sub_sub_dirname_A",
-    #                 r"root\dirname_B\sub_dirname_B"]
-    
-    root_target = tmp_path_factory.mktemp("root_target", numbered=False)
-    dir_A = root_target / "dirname_A"
-    dir_A.mkdir()
-    sub_dir_A = dir_A / "sub_dirname_A"
-    sub_dir_A.mkdir()
+@pytest.fixture(autouse=True)
+def mock_clear(monkeypatch):
+    def mock_clear_console():
+        return None
+    monkeypatch.setattr("backup.in_out.clear_console", mock_clear_console)
 
-    sub_sub_dir_A = sub_dir_A / "sub_sub_dirname_A"
-    sub_sub_dir_A.mkdir()
 
-    dir_B = root_target / "dirname_B"
-    dir_B.mkdir()
+@pytest.fixture()
+def mock_functions_core(monkeypatch):
+    expected_datas = (
+        (r'source_path\dirname_A', ['source_dir_A', 'source_dir_B']),
+        (r'target_path\dirname_B', ['target_dir_A', 'target_dir_B']),
+    )
+    mock_clear_console = Mock()
+    mock_title = Mock()
+    mock_get_src_dirs_and_target_dirs = Mock(return_value=expected_datas)
+    mock_directories_manager_create_delete = Mock()
+    mock_files_manager_copy_delete = Mock()
+    mock_files_manager_update = Mock()
 
-    sub_dir_B = dir_B / "sub_dirname_B"
-    sub_dir_B.mkdir()
+    monkeypatch.setattr("backup.in_out.clear_console", mock_clear_console)
+    monkeypatch.setattr("backup.in_out.title", mock_title)
+    monkeypatch.setattr(
+        "backup.utils.directories_manager_create_delete",
+        mock_directories_manager_create_delete,
+    )
 
-    return root_target
+    monkeypatch.setattr(
+        "backup.utils.get_src_dirs_and_target_dirs",
+        mock_get_src_dirs_and_target_dirs,
+    )
+    monkeypatch.setattr(
+        "backup.utils.files_manager_copy_delete",
+        mock_files_manager_copy_delete,
+    )
+    monkeypatch.setattr(
+        "backup.utils.files_manager_update",
+        mock_files_manager_update,
+    )
+    return {
+        'clear_console': mock_clear_console,
+        'title': mock_title,
+        'get_src_dirs_and_target_dirs': mock_get_src_dirs_and_target_dirs,
+        'directories_manager_create_delete':
+            mock_directories_manager_create_delete,
+        'files_manager_copy_delete': mock_files_manager_copy_delete,
+        'files_manager_update': mock_files_manager_update,
+    }

@@ -13,7 +13,6 @@ from backup.in_out import (
 def get_last_folder(path: str) -> str:
     """Retourne le dernier dossier d'un chemin."""
     return pathlib.PurePath(path).name
-    # return os.path.basename(os.path.normpath(path))
 
 
 def get_dir_list(path: str, root_folder: str) -> list[str] | None:
@@ -95,8 +94,8 @@ def delete_folders(folders: list[str], path: str):
     for folder in remove_subfolders_paths(folders):
         try:
             shutil.rmtree(os.path.join(path, folder))
-        except OSError as error:
-            error_msg(str(error))
+        except OSError as err:
+            error_msg(f"Une erreur s'est produite !! : {err}")
 
 
 def files_names_list(path_dir: str) -> list[str] | None:
@@ -168,20 +167,22 @@ def files_manager_copy_delete(
                 target_files_name, src_files_name
             )
             if files_to_copy:
-                copy_files(files_to_copy, path_src, paths_target[i])
+                copy_or_update_files(files_to_copy, path_src, paths_target[i])
             if files_to_delete:
                 delete_files(files_to_delete, paths_target[i])
 
 
-def copy_files(files_to_copy: list[str], path_src: str, paths_target: str):
+def copy_or_update_files(
+    files_to_copy: list[str], path_src: str, path_target: str
+):
     for file in files_to_copy:
         try:
             shutil.copy2(
                 os.path.join(path_src, file),
-                os.path.join(paths_target, file),
+                os.path.join(path_target, file),
             )
-        except Exception as err:
-            error_msg(f"Une erreur s'est produite : {err}")
+        except OSError as err:
+            error_msg(f"Une erreur s'est produite !! : {err}")
 
 
 def delete_files(files_to_delete: list[str], paths_target: str):
@@ -209,18 +210,9 @@ def files_manager_update(
                 if dicts_src.get(file) != dicts_target.get(file)
             ]
             if files_to_update:
-                update_files(files_to_update, path_src, paths_target[i])
-
-
-def update_files(files_to_update: list[str], path_src: str, paths_target: str):
-    for file in files_to_update:
-        try:
-            shutil.copy2(
-                os.path.join(path_src, file),
-                os.path.join(paths_target, file),
-            )
-        except Exception as err:
-            error_msg(f"Une erreur s'est produite : {err}")
+                copy_or_update_files(
+                    files_to_update, path_src, paths_target[i]
+                )
 
 
 def get_files_names_and_sizes(path: str) -> dict[str, dict[str, int]]:

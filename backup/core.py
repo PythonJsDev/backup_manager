@@ -2,7 +2,6 @@ from . import utils
 from . import in_out
 
 
-#  core.py
 def run_app():
     in_out.clear_console()
     in_out.title()

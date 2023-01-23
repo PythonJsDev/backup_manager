@@ -1,6 +1,6 @@
-# from backup import core
+
 from backup import utils
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 
 def test_get_last_folder_empty(test_path):
@@ -228,14 +228,21 @@ def test_remove_subfolders_paths():
     assert expected_path == utils.remove_subfolders_paths(path_folders)
 
 
-def test_delete_folders_path_not_found(folders_tree, monkeypatch, capsys):
-    """vérifie que lorsque le chemin du dossier à effacer n'est pas trouvé
-    alors le message affiché dans la console est correcte"""
+def test_delete_folders_call_shutil(monkeypatch):
+    """Verifie que la fonction shutil.rmtree soit appelé le bon nombre de fois
+    avec les bons arguments"""
+    folders_tree = [
+        r"Z:\backup\root_target\dirname_A",
+        r"Z:\backup\root_target\dirname_B\sub_dirname_B",
+    ]
     path_target = r'Z:\backup'
+    mock_shutil = Mock()
+    monkeypatch.setattr("backup.utils.shutil", mock_shutil)
 
     def mock_remove_subfolders_paths(path_folders: list) -> list:
         return [
             r"root_target\dirname_A",
+            r"root_target\dirname_B\sub_dirname_B",
         ]
 
     monkeypatch.setattr(
@@ -243,38 +250,32 @@ def test_delete_folders_path_not_found(folders_tree, monkeypatch, capsys):
         mock_remove_subfolders_paths,
     )
     utils.delete_folders(folders_tree, path_target)
-    captured = capsys.readouterr()
-    expected_msg = (
-        "[WinError 3] Le chemin d’accès spécifié est introuvable:"
-        " 'Z:\\\\backup\\\\root_target\\\\dirname_A'"
-    )
-    expected = (
-        "*" * len(expected_msg)
-        + '\n'
-        + expected_msg
-        + '\n'
-        + "*" * len(expected_msg)
-        + '\n'
-    )
-    assert captured.out == expected
+    expected_calls = [
+        call(r"Z:\backup\root_target\dirname_A"),
+        call(r"Z:\backup\root_target\dirname_B\sub_dirname_B"),
+    ]
+    for called, expected_call in zip(
+        mock_shutil.rmtree.mock_calls, expected_calls
+    ):
+        assert called == expected_call
 
 
-# def test_delete_folders(folders_tree, monkeypatch):
-#     """Verifie que les dossiers dirname_A et sub_dirname_B et ce qu'ils
-#     contiennent sont supprimés de la cible path_target """
-#     path_target = r'Z:\backup'
+def test_delete_folders_OSError(monkeypatch):
+    """Verifie que si shutil.rmtree lève une exception OSError,
+    celle-ci est gérée."""
+    folders_tree = [
+        r"Z:\backup\root_target\dirname_A",
+    ]
+    path_target = r'Z:\backup'
+    mock_shutil = Mock()
+    monkeypatch.setattr("backup.utils.shutil", mock_shutil)
+    mock_shutil.rmtree.side_effect = OSError('error message')
+    mock_error_msg = Mock()
+    monkeypatch.setattr("backup.utils.error_msg", mock_error_msg)
+    error_msg = "Une erreur s'est produite !! : error message"
 
-#     def mock_remove_subfolders_paths(path_folders: list) -> list:
-#         return [
-#             r"root_target\dirname_A",
-#             r"root_target\dirname_B\sub_dirname_B"
-#         ]
-
-#     monkeypatch.setattr(
-#         "backup.utils.remove_subfolders_paths",
-#         mock_remove_subfolders_paths,
-#     )
-#     utils.delete_folders(folders_tree, path_target)
+    utils.delete_folders(folders_tree, path_target)
+    mock_error_msg.assert_called_once_with(error_msg)
 
 
 def test_get_src_dirs_and_target_dirs(monkeypatch):
@@ -291,23 +292,52 @@ def test_get_src_dirs_and_target_dirs(monkeypatch):
         ["target_dir_A", "target_dir_B"],
     ]
 
-    def mock_get_last_folder(path_source):
+    def mock_get_last_folder(path_source: str) -> str:
         return "source_dir_A"
 
     monkeypatch.setattr("backup.utils.get_dir_path", mock_get_dir_path)
     monkeypatch.setattr("backup.utils.get_dir_list", mock_get_dir_list)
     monkeypatch.setattr("backup.utils.get_last_folder", mock_get_last_folder)
     expected = (
-        ('source_path\\dirname_A', ['source_dir_A', 'source_dir_B']),
-        ('target_path\\dirname_B', ['target_dir_A', 'target_dir_B']),
+        (r'source_path\dirname_A', ['source_dir_A', 'source_dir_B']),
+        (r'target_path\dirname_B', ['target_dir_A', 'target_dir_B']),
     )
     assert utils.get_src_dirs_and_target_dirs() == expected
 
 
-def test_files_manager_copy_delete():
-    ...
+def test_copy_or_update_files_call_shutil(monkeypatch):
+    """Verifie que la fonction shutil.copy2 soit appelé le bon nombre de fois
+    avec les bons arguments"""
+    files_to_copy_update = ["file_a.txt", "file_b.py", "file_c.png"]
+    path_src = 'dirname_source'
+    path_target = 'dirname_target'
+    mock_shutil = Mock()
+
+    monkeypatch.setattr("backup.utils.shutil", mock_shutil)
+    utils.copy_or_update_files(files_to_copy_update, path_src, path_target)
+
+    expected_calls = [
+        call(r"dirname_source\file_a.txt", r"dirname_target\file_a.txt"),
+        call(r"dirname_source\file_b.py", r"dirname_target\file_b.py"),
+        call(r"dirname_source\file_c.png", r"dirname_target\file_c.png"),
+    ]
+    for called, expected_call in zip(
+        mock_shutil.copy2.mock_calls, expected_calls
+    ):
+        assert called == expected_call
 
 
-# files_manager_update
-# files_manager_copy_delete
-# directories_manager_create_delete
+def test_copy_or_update_files_OSError(monkeypatch):
+    """Verifie que si shutil.copy2 lève une exception OSError,
+    celle-ci est gérée."""
+    files_to_copy = ["file_a.txt"]
+    path_src = r'dirname_source\file_a.txt'
+    path_target = r"dirname_target\file_a.txt"
+    mock_shutil = Mock()
+    mock_shutil.copy2.side_effect = OSError('error message')
+    mock_error_msg = Mock()
+    error_msg = "Une erreur s'est produite !! : error message"
+    monkeypatch.setattr("backup.utils.shutil", mock_shutil)
+    monkeypatch.setattr("backup.utils.error_msg", mock_error_msg)
+    utils.copy_or_update_files(files_to_copy, path_src, path_target)
+    mock_error_msg.assert_called_once_with(error_msg)
