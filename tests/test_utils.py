@@ -1,4 +1,3 @@
-
 from backup import utils
 from unittest.mock import Mock, call
 
@@ -93,22 +92,6 @@ def test_diff_between_two_list_if_list2_not_list():
     assert not (utils.diff_between_two_lists(list_2, list_1))
 
 
-def test_diff_between_two_list_if_list2_is_none():
-    """Test si la fonction 'diff_between_two_lists' retourne list_1
-    si list_2 est None."""
-    list_1 = ["a", "b", "c", "d", "e", "g"]
-    list_2 = None
-    assert utils.diff_between_two_lists(list_1, list_2) == list_1
-
-
-def test_diff_between_two_list_if_list1_is_none():
-    """Test si la fonction 'diff_between_two_lists' retourne list_2
-    si list_1 est None."""
-    list_1 = None
-    list_2 = ["a", "b", "c", "d", "e", "g"]
-    assert utils.diff_between_two_lists(list_1, list_2) == list_2
-
-
 def test_diff_between_two_list_if_lists_are_none():
     """Test si la fonction 'diff_between_two_lists' retourne None
     si list_1 et list_2 sont None."""
@@ -125,6 +108,30 @@ def test_create_folders(tmp_path):
 
     get_folders = [f.name for f in list(tmp_path.iterdir()) if f.is_dir()]
     assert folders.sort() == get_folders.sort()
+
+
+# def test_delete_files(monkeypatch):
+#     files_to_delete = ['file_1.py']
+#     paths_target = r"Z:\backup"
+#     mock_os = Mock()
+#     monkeypatch.setattr("backup.utils.os", mock_os)
+
+#     utils.delete_files(files_to_delete, paths_target)
+#     mock_os.remove.assert_called_with(r"Z:\backup\file_1.py")
+
+
+    # for file in files_to_delete:
+    #     file_path = os.path.join(paths_target, file)
+    #     print('**', file_path)
+    #     # os.remove(file_path) if os.path.exists(file_path) else error_msg(
+    #     #     f"Le fichier '{file_path}' n'existe pas."
+    #     # )
+
+# @unittest.mock.patch('os.system')
+# def test_my_function(os_system):
+#     # type: (unittest.mock.Mock) -> None
+#     my_function("/path/to/dir")
+#     os_system.assert_called_once_with('ls /path/to/dir')
 
 
 def test_build_paths():
@@ -341,3 +348,34 @@ def test_copy_or_update_files_OSError(monkeypatch):
     monkeypatch.setattr("backup.utils.error_msg", mock_error_msg)
     utils.copy_or_update_files(files_to_copy, path_src, path_target)
     mock_error_msg.assert_called_once_with(error_msg)
+
+
+def test_sure_to_erase_call_info_msg(mock_functions_sure_to_erase_or_update):
+    """vérifie que 'sure_to_erase' appele 'info_msg' une seule fois et avec
+    le bon argument."""
+    confirm_msg = mock_functions_sure_to_erase_or_update.get('confirm_msg')
+    path = mock_functions_sure_to_erase_or_update.get('path')
+
+    utils.sure_to_erase_or_update(
+        mock_functions_sure_to_erase_or_update.get('items'), confirm_msg, path
+    )
+    mock_functions_sure_to_erase_or_update.get(
+        'info_msg'
+    ).assert_called_once_with(f"{confirm_msg} {path}")
+
+
+def test_sure_to_erase_call_display_list_of_items(
+    mock_functions_sure_to_erase_or_update,
+):
+    """vérifie que 'sure_to_erase' appele 'display_list_of_items' une seule
+    fois et avec le bon argument."""
+    confirm_msg = mock_functions_sure_to_erase_or_update.get('confirm_msg')
+    path = mock_functions_sure_to_erase_or_update.get('path')
+    items = mock_functions_sure_to_erase_or_update.get('items')
+    utils.sure_to_erase_or_update(items, confirm_msg, path)
+    mock_functions_sure_to_erase_or_update.get(
+        'display_list_of_items'
+    ).assert_called_once_with(items)
+
+# files_names_list path_no valid
+# get_files_names_and_sizes path no valid

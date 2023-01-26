@@ -29,7 +29,8 @@ def info_msg(msg: str) -> None:
 
 
 def display_list_of_items(items: list[str]) -> None:
-    print(','.join(items))
+    if isinstance(items, list):
+        print(','.join(items))
 
 
 def continue_or_stop():

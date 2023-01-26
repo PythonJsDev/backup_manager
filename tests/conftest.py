@@ -103,3 +103,19 @@ def mock_functions_core(monkeypatch):
         'files_manager_copy_delete': mock_files_manager_copy_delete,
         'files_manager_update': mock_files_manager_update,
     }
+
+
+@pytest.fixture()
+def mock_functions_sure_to_erase_or_update(monkeypatch):
+    mock_info_msg = Mock()
+    mock_display_list_of_items = Mock()
+    monkeypatch.setattr("backup.utils.info_msg", mock_info_msg)
+    monkeypatch.setattr("backup.utils.display_list_of_items",
+                        mock_display_list_of_items)
+    return {
+        'info_msg': mock_info_msg,
+        'display_list_of_items': mock_display_list_of_items,
+        'confirm_msg': 'confirm message ',
+        'path': r'z:\backup',
+        'items': ['item_1', 'item_2']
+    }

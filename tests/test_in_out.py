@@ -55,8 +55,15 @@ def test_get_dir_remove_spaces(monkeypatch):
 
 def test_display_list_of_items(capsys):
     """Verifie que la liste d'items s'affiche sur le terminal"""
-    in_out.display_list_of_items(['dir_A', 'dir_B', 'dir_C'])
-    assert capsys.readouterr().out == "dir_A,dir_B,dir_C\n"
+    in_out.display_list_of_items(['item_A', 'item_B', 'item_C'])
+    assert capsys.readouterr().out == "item_A,item_B,item_C\n"
+
+
+def test_display_list_of_items_not_a_list(capsys):
+    """Verifie que 'display_list_of_items' n'affiche rien si le paramètre passé
+    n'est pas une liste"""
+    in_out.display_list_of_items('not a list')
+    assert capsys.readouterr().out == ""
 
 
 def test_continue_or_stop_ask_question(capsys, monkeypatch):
@@ -90,11 +97,10 @@ def test_continue_or_stop_loop_until_yes(capsys, monkeypatch):
     La fonction retourne alors True"""
     monkeypatch.setattr("sys.stdin", io.StringIO("value\n123\ny"))
     valeur_returned = in_out.continue_or_stop()
-    print(capsys.readouterr().out)
     assert capsys.readouterr().out == (
         "Taper 'y' pour continuer et 'n' pour arrêter: "
         "Taper 'y' pour continuer et 'n' pour arrêter: "
-        "Taper 'y' pour continuer et 'n' pour arrêter: \n"
+        "Taper 'y' pour continuer et 'n' pour arrêter: "
     )
     assert valeur_returned
 
@@ -105,10 +111,9 @@ def test_continue_or_stop_loop_until_no(capsys, monkeypatch):
     La fonction retourne alors False"""
     monkeypatch.setattr("sys.stdin", io.StringIO("value\n123\nn"))
     valeur_returned = in_out.continue_or_stop()
-    print(capsys.readouterr().out)
     assert capsys.readouterr().out == (
         "Taper 'y' pour continuer et 'n' pour arrêter: "
         "Taper 'y' pour continuer et 'n' pour arrêter: "
-        "Taper 'y' pour continuer et 'n' pour arrêter: \n"
+        "Taper 'y' pour continuer et 'n' pour arrêter: "
     )
     assert not valeur_returned

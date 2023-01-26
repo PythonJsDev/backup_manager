@@ -60,10 +60,6 @@ def diff_between_two_lists(
     """Retourne les éléments présents dans list_1 mais pas dans list_2."""
     if isinstance(list_1, list) and isinstance(list_2, list):
         return [el for el in list_1 if el not in list_2]
-    if list_1 and not list_2:
-        return list_1
-    if list_2 and not list_1:
-        return list_2
     return None
 
 
@@ -101,9 +97,10 @@ def delete_folders(folders: list[str], path: str):
 def files_names_list(path_dir: str) -> list[str] | None:
     """Retourne la liste des fichiers contenus dans le dossier passé en
     paramètre."""
-    names_and_sizes = get_files_names_and_sizes(path_dir).get(path_dir)
-    if names_and_sizes:
-        return list(names_and_sizes.keys())
+    if os.path.exists(path_dir):
+        names_and_sizes = get_files_names_and_sizes(path_dir).get(path_dir)
+        if names_and_sizes:
+            return list(names_and_sizes.keys())
     return None
 
 
@@ -123,13 +120,15 @@ def directories_manager_create_delete(
     if missing_folders:
         create_folders(missing_folders, path_target)
     if excess_folders:
-        info_msg(
-            (
-                "Les dossiers suivants vont être supprimés du dossier cible:"
-                f"{path_target}"
+        if len(excess_folders) > 1:
+            msg = (
+                "Les dossiers suivants vont être supprimés du dossier"
+                " cible:\n"
             )
-        )
-        display_list_of_items(excess_folders)
+        else:
+            msg = "Le dossier suivant va être supprimé du dossier cible:\n"
+        sure_to_erase_or_update(excess_folders, msg, path_target)
+
         if continue_or_stop():
             delete_folders(excess_folders, path_target)
 
@@ -154,21 +153,27 @@ def files_manager_copy_delete(
 
     paths_src = build_paths(path_source, src_dirs)
     paths_target = build_paths(path_target, src_dirs)
-
     for i, path_src in enumerate(paths_src):
         src_files_name = files_names_list(path_src)
         target_files_name = files_names_list(paths_target[i])
-
-        if src_files_name and not target_files_name:
-            files_to_copy = diff_between_two_lists(
-                src_files_name, target_files_name
-            )
-            files_to_delete = diff_between_two_lists(
-                target_files_name, src_files_name
-            )
-            if files_to_copy:
-                copy_or_update_files(files_to_copy, path_src, paths_target[i])
-            if files_to_delete:
+        files_to_copy = diff_between_two_lists(
+            src_files_name, target_files_name
+        )
+        files_to_delete = diff_between_two_lists(
+            target_files_name, src_files_name
+        )
+        if files_to_copy:
+            copy_or_update_files(files_to_copy, path_src, paths_target[i])
+        if files_to_delete:
+            if len(files_to_delete) > 1:
+                msg = (
+                    "Les fichiers suivants vont être supprimés du dossier"
+                    " cible:\n"
+                )
+            else:
+                msg = "Le fichier suivant va être supprimé du dossier cible:\n"
+            sure_to_erase_or_update(files_to_delete, msg, paths_target[i])
+            if continue_or_stop():
                 delete_files(files_to_delete, paths_target[i])
 
 
@@ -210,9 +215,23 @@ def files_manager_update(
                 if dicts_src.get(file) != dicts_target.get(file)
             ]
             if files_to_update:
-                copy_or_update_files(
-                    files_to_update, path_src, paths_target[i]
-                )
+                if len(files_to_update) > 1:
+                    msg = "Les fichiers suivants vont être mise à jour\n"
+                else:
+                    msg = "Le fichier suivant va être mise à jour\n"
+                sure_to_erase_or_update(files_to_update, msg, path_target)
+
+                if continue_or_stop():
+                    copy_or_update_files(
+                        files_to_update, path_src, paths_target[i]
+                    )
+
+
+def sure_to_erase_or_update(
+    items_to_delete: list[str], confirm_msg: str, path: str
+) -> None:
+    info_msg(f"{confirm_msg} {path}")
+    display_list_of_items(items_to_delete)
 
 
 def get_files_names_and_sizes(path: str) -> dict[str, dict[str, int]]:
@@ -224,8 +243,11 @@ def get_files_names_and_sizes(path: str) -> dict[str, dict[str, int]]:
     {chemin du dossier racine : {nom du fichier : taille du fichier, ...}}"""
 
     dir_files_size = {}
-    with os.scandir(path) as file:
-        dir_files_size[path] = {
-            elem.name: elem.stat().st_size for elem in file if elem.is_file()
-        }
+    if os.path.exists(path):
+        with os.scandir(path) as file:
+            dir_files_size[path] = {
+                elem.name: elem.stat().st_size
+                for elem in file
+                if elem.is_file()
+            }
     return dir_files_size
