@@ -47,6 +47,11 @@ def get_src_dirs_and_target_dirs() -> tuple[
         if not target_dirs:
             path_target = get_dir_path('chemin cible')
         root_folder_src = get_last_folder(path_source)
+        root_folder_target = get_last_folder(path_target)
+        if root_folder_src != root_folder_target:
+            error_msg((f"Les dossiers racines {root_folder_src} et "
+                      f"{root_folder_target} doivent avoir le même nom"))
+            break
         src_dirs = get_dir_list(path_source, root_folder_src)
         target_dirs = get_dir_list(path_target, root_folder_src)
         if src_dirs and target_dirs:
@@ -60,6 +65,8 @@ def diff_between_two_lists(
     """Retourne les éléments présents dans list_1 mais pas dans list_2."""
     if isinstance(list_1, list) and isinstance(list_2, list):
         return [el for el in list_1 if el not in list_2]
+    if isinstance(list_1, list) and not list_2:
+        return list_1
     return None
 
 
@@ -150,9 +157,9 @@ def files_manager_copy_delete(
     'dir_targets' mais qui n'existent pas sur la source dans les
     dossiers 'dirs_source'
     """
-
     paths_src = build_paths(path_source, src_dirs)
     paths_target = build_paths(path_target, src_dirs)
+   
     for i, path_src in enumerate(paths_src):
         src_files_name = files_names_list(path_src)
         target_files_name = files_names_list(paths_target[i])

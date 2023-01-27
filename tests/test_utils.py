@@ -100,6 +100,14 @@ def test_diff_between_two_list_if_lists_are_none():
     assert not utils.diff_between_two_lists(list_1, list_2)
 
 
+def test_diff_between_two_list_if_list2_is_none():
+    """Test si la fonction 'diff_between_two_lists' retourne list_1
+    si list_2 est None."""
+    list_1 = ["a", "b", "c", "d", "e", "g"]
+    list_2 = None
+    assert utils.diff_between_two_lists(list_1, list_2)
+
+
 def test_create_folders(tmp_path):
     """Test la création de la liste de dossiers 'folders' dans un dossier
     temporaire."""
@@ -108,30 +116,6 @@ def test_create_folders(tmp_path):
 
     get_folders = [f.name for f in list(tmp_path.iterdir()) if f.is_dir()]
     assert folders.sort() == get_folders.sort()
-
-
-# def test_delete_files(monkeypatch):
-#     files_to_delete = ['file_1.py']
-#     paths_target = r"Z:\backup"
-#     mock_os = Mock()
-#     monkeypatch.setattr("backup.utils.os", mock_os)
-
-#     utils.delete_files(files_to_delete, paths_target)
-#     mock_os.remove.assert_called_with(r"Z:\backup\file_1.py")
-
-
-    # for file in files_to_delete:
-    #     file_path = os.path.join(paths_target, file)
-    #     print('**', file_path)
-    #     # os.remove(file_path) if os.path.exists(file_path) else error_msg(
-    #     #     f"Le fichier '{file_path}' n'existe pas."
-    #     # )
-
-# @unittest.mock.patch('os.system')
-# def test_my_function(os_system):
-#     # type: (unittest.mock.Mock) -> None
-#     my_function("/path/to/dir")
-#     os_system.assert_called_once_with('ls /path/to/dir')
 
 
 def test_build_paths():
